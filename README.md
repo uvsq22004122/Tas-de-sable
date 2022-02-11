@@ -1,7 +1,7 @@
 # Tas-de-sable
 #############################
 # Groupe BI 2
-# Bastien
+# Bastien COMBES
 # Adrien
 # Many
 # Perrine
