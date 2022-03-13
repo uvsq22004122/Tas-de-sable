@@ -14,7 +14,7 @@ WIDTH = 600
 # taille de la grille en carreaux
 N = 4
 # taille des lignes de la grille
-offset_grille = WIDTH / N
+OFFSET_GRID = WIDTH / N
 
 ######################
 # Variables globales #
@@ -31,24 +31,19 @@ canvas = tk.Canvas(racine, width=WIDTH, height=HEIGHT, bg="white")
 
 def config_vide():
     '''Initialise la configuration de tas de sable à 0.'''
-    config_courante.clear()
-    for i in range(N):
-        row = []
-        for j in range(N):
-            row.append(rd.randint(0, 0))
-        config_courante.append(row)
+    global config_courante
+    delete_affichage_tas_de_sable()
+    config_courante = [[0] * N for _ in range(N)]
     print(f"0: {config_courante}")
+    affichage_tas_de_sable(racine, canvas)
 
 
 def config_aleatoire():
     '''Génération d'une matrice de tas de sable de taille N.
     Ajout à la variable config_courante de la configuration aléatoire.'''
-    config_courante.clear()
-    for i in range(N):
-        row = []
-        for j in range(N):
-            row.append(rd.randint(0, 9))
-        config_courante.append(row)
+    global config_courante
+    delete_affichage_tas_de_sable()
+    config_courante = [[rd.randint(0, 9) for _ in range(N)] for _ in range(N)]
     print(f"avant: {config_courante}")
     affichage_tas_de_sable(racine, canvas)
 
@@ -57,6 +52,8 @@ def commencer_config_aleatoire():
     '''Exécute les règles :
         - Si un élément de la grille >= 4 alors on le soustrait par 4
                 et on ajoute 1 à tous ses voisins.'''
+    global config_courante
+    delete_affichage_tas_de_sable()
     stable = False
     while not stable:
         stable = True
@@ -97,25 +94,30 @@ def affichage_widget(racine, canvas):
 
 def generation_grille(canvas):
     '''Génération de la grille pour le tas de sable en fonction de N.'''
-    offset_grille = WIDTH / N
     for i in range(1, N):
         # ligne x0
-        canvas.create_line((offset_grille * i, 0), (offset_grille * i, WIDTH))
+        canvas.create_line((OFFSET_GRID * i, 0), (OFFSET_GRID * i, WIDTH))
         # ligne y0
-        canvas.create_line((0, offset_grille * i), (HEIGHT, offset_grille * i))
+        canvas.create_line((0, OFFSET_GRID * i), (HEIGHT, OFFSET_GRID * i))
 
 
 def affichage_tas_de_sable(racine, canvas):
     '''Génération du contenu de config_courante dans la grille.'''
-    offset_insertion_x = ((WIDTH / N) / 2)
-    offset_insertion_y = ((HEIGHT / N) / 2)
+    global config_courante
+    offset_insertion_x = OFFSET_GRID / 2
+    offset_insertion_y = OFFSET_GRID / 2
 
     for i in range(N):
-        offset_insertion_y += (i * offset_grille)
         for j, x in enumerate(config_courante[i]):
             canvas.create_text(offset_insertion_x,
-                               offset_insertion_y, text=str(x))
-            offset_insertion_x += offset_grille
+                               offset_insertion_y, text=str(x), tags='grains')
+            offset_insertion_x += OFFSET_GRID
+        offset_insertion_x = OFFSET_GRID / 2
+        offset_insertion_y += OFFSET_GRID
+
+
+def delete_affichage_tas_de_sable():
+    canvas.delete('grains')
 
 
 def main():
