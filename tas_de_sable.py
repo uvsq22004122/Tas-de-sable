@@ -3,6 +3,7 @@
 ######################
 import tkinter as tk
 import random as rd
+from functools import partial
 
 #############################
 # Définition des constantes #
@@ -20,40 +21,46 @@ OFFSET_GRID = WIDTH / N
 # Variables globales #
 ######################
 config_courante = []
-racine = tk.Tk()
-racine.title("Génération tas de sables")
-canvas = tk.Canvas(racine, width=WIDTH, height=HEIGHT, bg="white")
+
 
 #############
 # Fonctions #
 #############
 
+def reset_affichage_grains(func):
+    '''Permet de reset l'affichage du tas de sable et d'appeler les fonctions
+    avec des décorateurs.'''
+    def wrapper(*args, **kwargs):
+        delete_affichage_tas_de_sable(*args, **kwargs)
+        func(*args, **kwargs)
+        affichage_tas_de_sable(*args, **kwargs)
+    return wrapper
 
-def config_vide():
+
+@reset_affichage_grains
+def config_vide(racine, canvas):
     '''Initialise la configuration de tas de sable à 0.'''
     global config_courante
-    delete_affichage_tas_de_sable()
     config_courante = [[0] * N for _ in range(N)]
     print(f"0: {config_courante}")
-    affichage_tas_de_sable(racine, canvas)
 
 
-def config_aleatoire():
+@reset_affichage_grains
+def config_aleatoire(racine, canvas):
     '''Génération d'une matrice de tas de sable de taille N.
     Ajout à la variable config_courante de la configuration aléatoire.'''
     global config_courante
-    delete_affichage_tas_de_sable()
-    config_courante = [[rd.randint(0, 9) for _ in range(N)] for _ in range(N)]
+    config_courante = [[rd.randint(0, 9)
+                        for _ in range(N)] for _ in range(N)]
     print(f"avant: {config_courante}")
-    affichage_tas_de_sable(racine, canvas)
 
 
-def commencer_config_aleatoire():
+@reset_affichage_grains
+def commencer_config_aleatoire(racine, canvas):
     '''Exécute les règles :
         - Si un élément de la grille >= 4 alors on le soustrait par 4
                 et on ajoute 1 à tous ses voisins.'''
     global config_courante
-    delete_affichage_tas_de_sable()
     stable = False
     while not stable:
         stable = True
@@ -71,19 +78,25 @@ def commencer_config_aleatoire():
                     if j - 1 >= 0:
                         config_courante[i][j-1] += 1
     print(f"apres: {config_courante}")
-    affichage_tas_de_sable(racine, canvas)
 
 
 def affichage_widget(racine, canvas):
     '''Interface tkinter : créations et placement des widgets.'''
+    # affection des fonctions avec des paramètres appliqués partiellement
+    # dans des variables pour les utiliser quand un bouton est cliqué
+    # (car les boutons prennent seulement des fonctions sans paramètres)
+    config_vide_no_args = partial(config_vide, racine, canvas)
+    config_aleatoire_no_args = partial(config_aleatoire, racine, canvas)
+    commencer_config_aleatoire_no_args = partial(commencer_config_aleatoire,
+                                                 racine, canvas)
     # création des boutons
     bouton_config_aleatoire = tk.Button(
-        racine, text="Configuration aléatoire", command=config_aleatoire)
+        racine, text="Configuration aléatoire", command=config_aleatoire_no_args)
     bouton_commencer_config_aleatoire = tk.Button(
-        racine, text="Commencer", command=commencer_config_aleatoire)
+        racine, text="Commencer", command=commencer_config_aleatoire_no_args)
     bouton_quitter = tk.Button(racine, text='Quitter', command=racine.quit)
     bouton_effacer_tas_de_sable = tk.Button(
-        racine, text='Effacer', command=config_vide)
+        racine, text='Effacer', command=config_vide_no_args)
     # placement des widgets
     canvas.grid(column=0, row=1)
     bouton_config_aleatoire.grid(row=0, column=1)
@@ -116,22 +129,22 @@ def affichage_tas_de_sable(racine, canvas):
         offset_insertion_y += OFFSET_GRID
 
 
-def delete_affichage_tas_de_sable():
+def delete_affichage_tas_de_sable(racine, canvas):
+    '''Efface les grains du tas de sable dans la grille.'''
     canvas.delete('grains')
 
 
 def main():
 
-    config_vide()
+    racine = tk.Tk()
+    racine.title("Génération tas de sables")
+    canvas = tk.Canvas(racine, width=WIDTH, height=HEIGHT, bg="white")
+    config_vide(racine, canvas)
     generation_grille(canvas)
     affichage_widget(racine, canvas)
-    affichage_tas_de_sable(racine, canvas)
 
     racine.mainloop()
 
 
 if __name__ == '__main__':
     main()
-
-# A regler : affichage_tas_de_sable(positionner les valeurs de config_courante
-# + supprimer les affichages).
